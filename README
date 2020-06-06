@@ -1,0 +1,8 @@
+This codebase creates a reference set from public ClinicalTrials.gov data.
+It also has some logic for creating an equivalently formatted set from the OMOP and EU-ADR reference sets.
+
+The following pipeline creates the reference set:
+1. download.sh gets all of the clinical trials and finds the ones with outcomes
+2. extract_raw.py extracts raw records and maps them to ICD10 and ATC codes.
+3. extract_unique.py consolidates the raw records into unique ICD10 and ATC tuples. It also performs statistical calculations.
+4. extract_positive_negative.py performs the Benjamini–Hochberg procedure to identify significant positive and negative controls.

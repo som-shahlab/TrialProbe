@@ -17,7 +17,7 @@ num_mappable_entries = 0
 with open('raw_entries.txt', 'w') as found_entries:
     with open('nct_with_events.txt') as f:
         for line in f:
-            study = line.split(':')[0].replace('nct2/', 'nct/')
+            study = line.split(':')[0].replace('nct/', 'nct/')
             try:
                 with open(study) as f:
                     document = lxml.etree.parse(f)

@@ -1,7 +1,7 @@
 library(jsonlite)
 library(tidyverse)
 
-json_full <- readLines("results.json")
+json_full <- readLines("clean_results.json")
 parsed_full <- lapply(json_full, fromJSON)
 
 jsonlist_to_row <- function(x) {

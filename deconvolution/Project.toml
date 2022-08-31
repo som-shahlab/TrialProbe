@@ -2,6 +2,7 @@
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Empirikos = "cab608d6-c565-4ea1-96d6-ce5441ba21b0"
+GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 Hypatia = "b99e6be6-89ff-11e8-14f8-45c827f4f8f2"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"

@@ -64,7 +64,7 @@ plot!(
     linestyle = :dash,
     label = "Empirical",
 )
-savefig("trialverify_distributions.pdf")
+# savefig("trialverify_distributions.pdf")
 
 # Compute denoised log-odds ratios
 postmeans = PosteriorMean.(Zs_all).(npmle_symm_fit.prior)
@@ -85,12 +85,15 @@ plot(
     xticks = ([0, log(3), log(10), log(30)], ["1", "3", "10", "30"]),
 )
 plot!([0, 3.45], [0, 3.45], linestyle = :dot, color = :grey, alpha = 0.7, label = "")
-savefig("denoise_odds_ratios.pdf")
+# savefig("denoise_odds_ratios.pdf")
 
 # Evaluation
 
 tbl_rows = tbl[_idx, :]
 tbl_rows.postmeans = copy(postmeans)
+
+CSV.write("with_means.csv", tbl_rows)
+
 sort!(tbl_rows, order(:postmeans, by = abs, rev = true))
 tbl_rows.unadj_z = tbl_rows.unadjusted_Z ./ tbl_rows.unadjusted_se
 tbl_rows.ipw_z = tbl_rows.ipw_Z ./ tbl_rows.ipw_se

@@ -126,7 +126,7 @@ def get_row(info):
         \\lfloor {t[1][0]} {space} {t[1][1]} \\rfloor
     '''
 
-    denoised_value = f'{math.exp(info["postmeans"]):.3}'
+    denoised_value = f'{math.exp(-info["postmeans"]):.2f}'
 
     parts = [
         adverse_string,

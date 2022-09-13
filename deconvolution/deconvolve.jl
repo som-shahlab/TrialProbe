@@ -14,7 +14,7 @@ pgfplotsx()
 empty!(PGFPlotsX.CUSTOM_PREAMBLE)
 
 theme(
-    :default;
+    :defaut;
     background_color_legend = :transparent,
     foreground_color_legend = :transparent,
     grid = nothing,
@@ -32,7 +32,7 @@ Zs_raw =
         tbl.N2 .+ tbl.X2,
         tbl.X1 .+ tbl.X2,
     )
-_idx = findall(getfield.(Zs_raw, :n) .> 0)
+_idx = findall(getfield.(Zs_raw, :Z) .> 0)
 Zs_all = Zs_raw[_idx]
 
 # Deconvolve
@@ -42,8 +42,14 @@ npmle_symm = NPMLE(
 )
 npmle_symm_fit = fit(npmle_symm, Zs_all)
 
-log_ORs = log.(Empirikos.odds_ratio.(Zs_all; offset = 0.5))
+log_ORs = log.(Empirikos.odds_ratio.(Zs_all; offset = 0.000000001))
 log_OR_cdf = ecdf([-log_ORs; log_ORs])
+
+print(support(npmle_symm_fit.prior))
+print('\n')
+print(cdf(npmle_symm_fit.prior, -log(10)))
+print("\nFOO\n")
+print(log_OR_cdf(-log(10)))
 
 # Plot deconvolved distribution
 plot(
@@ -53,7 +59,7 @@ plot(
     color = :purple,
     xlabel = L"\textrm{odds ratio } \mu",
     ylabel = "Distribution",
-    label = "Deconvolved",
+    label = "Estimated",
     xlim = (-3, 3),
     xticks = ([-log(10), -log(3), 0, log(3), log(10)], ["0.1", "0.33", "1", "3", "10"]),
 )
@@ -64,7 +70,7 @@ plot!(
     linestyle = :dash,
     label = "Empirical",
 )
-# savefig("trialverify_distributions.pdf")
+savefig("trialverify_distributions.tex")
 
 # Compute denoised log-odds ratios
 postmeans = PosteriorMean.(Zs_all).(npmle_symm_fit.prior)
@@ -85,7 +91,7 @@ plot(
     xticks = ([0, log(3), log(10), log(30)], ["1", "3", "10", "30"]),
 )
 plot!([0, 3.45], [0, 3.45], linestyle = :dot, color = :grey, alpha = 0.7, label = "")
-# savefig("denoise_odds_ratios.pdf")
+savefig("denoise_odds_ratios.tex")
 
 # Evaluation
 
@@ -93,75 +99,3 @@ tbl_rows = tbl[_idx, :]
 tbl_rows.postmeans = copy(postmeans)
 
 CSV.write("with_means.csv", tbl_rows)
-
-sort!(tbl_rows, order(:postmeans, by = abs, rev = true))
-tbl_rows.unadj_z = tbl_rows.unadjusted_Z ./ tbl_rows.unadjusted_se
-tbl_rows.ipw_z = tbl_rows.ipw_Z ./ tbl_rows.ipw_se
-sorted_postmeans = copy(tbl_rows.postmeans)
-
-
-## Pointwise
-true_discoveries_unadjusted_pointwise =
-    (abs.(tbl_rows.unadj_z) .> 1.96) .&
-    (sign.(tbl_rows.unadj_z) .== sign.(tbl_rows.postmeans))
-false_discoveries_unadjusted_pointwise =
-    (abs.(tbl_rows.unadj_z) .> 1.96) .&
-    (sign.(tbl_rows.unadj_z) .!= sign.(tbl_rows.postmeans))
-any_discovery_unadjusted_pointwise = abs.(tbl_rows.unadj_z) .> 1.96
-
-true_discoveries_ipw_pointwise =
-    (abs.(tbl_rows.ipw_z) .> 1.96) .& (sign.(tbl_rows.ipw_z) .== sign.(tbl_rows.postmeans))
-false_discoveries_ipw_pointwise =
-    (abs.(tbl_rows.ipw_z) .> 1.96) .& (sign.(tbl_rows.ipw_z) .!= sign.(tbl_rows.postmeans))
-any_discovery_ipw_pointwise = abs.(tbl_rows.ipw_z) .> 1.96
-
-
-## Cumulative
-true_discoveries_unadj = cumsum(true_discoveries_unadjusted_pointwise)
-false_discoveries_unadj = cumsum(false_discoveries_unadjusted_pointwise)
-total_discoveries_unadj = false_discoveries_unadj .+ true_discoveries_unadj
-sign_rate_unadj = false_discoveries_unadj ./ total_discoveries_unadj
-sign_rate_unadj_isotonic =
-    predict(fit(IsotonicRegression, sorted_postmeans, sign_rate_unadj))
-
-
-true_discoveries_ipw = cumsum(true_discoveries_ipw_pointwise)
-false_discoveries_ipw = cumsum(false_discoveries_ipw_pointwise)
-total_discoveries_ipw = false_discoveries_ipw .+ true_discoveries_ipw
-sign_rate_ipw = false_discoveries_ipw ./ total_discoveries_ipw
-sign_rate_ipw_isotonic = predict(fit(IsotonicRegression, sorted_postmeans, sign_rate_ipw))
-
-top_ns = 100:1000
-
-plot(
-    exp.(abs.(sorted_postmeans))[top_ns],
-    [total_discoveries_unadj[top_ns] false_discoveries_unadj[top_ns]],
-    legend = :topright,
-    linestyle = [:solid :dash],
-    color = :darkorange,
-    label = ["Unadjusted Cox (Total)" "Unadjusted Cox (Discordant sign)"],
-    xlabel = "Denoised odds ratio",
-    ylabel = "Discoveries",
-)
-
-plot!(
-    exp.(abs.(sorted_postmeans)[top_ns]),
-    [total_discoveries_ipw[top_ns] false_discoveries_ipw[top_ns]],
-    legend = :topright,
-    linestyle = [:solid :dash],
-    label = ["Matched Cox (Total)" "Matched Cox (Discordant sign)"],
-    color = :purple,
-)
-savefig("trialverify_discoveries.pdf")
-
-plot(
-    exp.(abs.(sorted_postmeans))[top_ns],
-    [sign_rate_unadj_isotonic[top_ns] sign_rate_ipw_isotonic[top_ns]],
-    label = ["Unadjusted Cox" "Matched Cox"],
-    color = [:orange :purple],
-    xlabel = "Denoised odds ratio",
-    ylabel = "Discordant sign rate",
-    legend = :topright,
-    ylim = (0, 0.5),
-)
-savefig("trialverify_sign_rate.pdf")

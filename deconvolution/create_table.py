@@ -3,12 +3,11 @@ import json
 import os
 import math
 
-umls_dir = '/labs/shahlab/projects/ethanid/2019AB/META'
 
 icd_map = {}
 atc_map = {}
 
-with open(os.path.join(umls_dir, 'MRCONSO.RRF')) as f:
+with open('smaller') as f:
     for line in f:
         if False:
             break
@@ -56,12 +55,14 @@ for info in infos:
 
 infos.sort(key=lambda a:abs(a['postmeans']), reverse=True)
 
+
+
 header = '''
 
 \\begin{center}
-\\begin{tabular}{ p{2cm}  p{2cm}  p{2cm} p{1.7cm} p{1.5cm} p{2.4cm} p{2.4cm} }
- Adverse Event (ICD10) & Drug A (ATC) & Drug B (ATC) & Contingency Table & Denoised odds ratio & Cox unadjusted & Cox adjusted \\\\
- \hline
+\\begin{tabular}{ p{3cm}  p{3cm}  p{3cm} p{2cm} p{2cm} }
+ Adverse Event (ICD10) & Drug A (ATC) & Drug B (ATC) & Contingency Table & Denoised odds ratio \\\\
+\\hline
 
 '''
 
@@ -122,8 +123,8 @@ def get_row(info):
     space = '\\hspace{0.2cm}'
 
     table = f'''
-        \\lceil {t[0][0]} {space} {t[0][1]} \\rceil \\newline
-        \\lfloor {t[1][0]} {space} {t[1][1]} \\rfloor
+        $\\lceil {t[0][0]} {space} {t[0][1]} \\rceil$ \\newline
+        $\\lfloor {t[1][0]} {space} {t[1][1]} \\rfloor$
     '''
 
     denoised_value = f'{math.exp(-info["postmeans"]):.2f}'
@@ -134,14 +135,11 @@ def get_row(info):
         get_drug_string(1),
         table,
         denoised_value,
-        get_value(info["cox"]["unadjusted"]),
-        get_value(info["cox"]["logistic_match"]),
-        r'\\'
     ]
 
-    return ' & '.join(parts) 
+    return ' & '.join(parts) + '\\\\'
 
 print(header)
-for info in infos[:30]:
+for info in infos[:10]:
     print(get_row(info))
 print(footer)

@@ -84,11 +84,36 @@ print("Got", sorted_postmeans[index],
     [true_frac_unadj[index] true_frac_match[index] true_frac_ipw[index]],
 )
 
+print("index\n")
+
+current = 1
+x = Vector{Int}()
+x_pos = Vector{Float64}()
+
+odds = exp.(abs.(sorted_postmeans))
+
+for i in range(2.5, stop=1, length=100)
+    global current
+    while odds[current] > i 
+        current += 1
+    end
+
+    if (length(x) == 0 || x[length(x)] != current)
+        push!(x, current)
+        push!(x_pos, i)
+    end
+    
+end
+
+print(length(x), " what ", length(x_pos), " sure ")
+
+
+
 top_ns = vcat(100:1000, 1000:10:length(sorted_postmeans))
 
 plot(
-    exp.(abs.(sorted_postmeans))[top_ns],
-    [sign_rate_unadj[top_ns] sign_rate_match[top_ns] sign_rate_ipw[top_ns]],
+    x_pos,
+    [sign_rate_unadj[x] sign_rate_match[x] sign_rate_ipw[x]],
     label = ["Unadjusted Cox" "Propensity Score Matched Cox" "Inverse Propensity Score Weighted Cox"],
     color = [:orange :purple :green],
     xlabel = "Reference Set Odds Ratio Threshold",
@@ -105,14 +130,15 @@ print("\nwat\n")
 print(exp.(abs.(sorted_postmeans))[1000])
 
 plot(
-    exp.(abs.(sorted_postmeans))[top_ns],
-    [true_frac_unadj[top_ns] true_frac_match[top_ns] true_frac_ipw[top_ns]],
+    x_pos,
+    [true_frac_unadj[x] true_frac_match[x] true_frac_ipw[x]],
     label = ["Unadjusted Cox" "Propensity Score Matched Cox" "Inverse Propensity Score Weighted Cox"],
     color = [:orange :purple :green],
     xlabel = "Reference Set Odds Ratio Threshold",
     ylabel = "Fraction Recovered",
     legend = :topright,
     xflip= true,
+    ylim = (0, 1),
     xticks = 1:0.25:2.25,
 )
 savefig("trialverify_found.tex")

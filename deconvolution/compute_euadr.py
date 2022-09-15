@@ -15,6 +15,8 @@ for method in ['unadjusted', 'logistics_match', 'logistics_ipw']:
         for row in rows:
             if not row['study'].startswith(name):
                 continue
+            if row['direction'] == '=':
+                continue
 
             data = row['cox'][method]
 
@@ -24,7 +26,7 @@ for method in ['unadjusted', 'logistics_match', 'logistics_ipw']:
             if significant:
                 num_found += 1
 
-                if data['coef'] > 0:
+                if data['coef'] < 0:
                     num_correct += 1
 
-        print(name, method, num_correct / num_found, num_correct / num_total)
+        print(name, method, num_total, num_correct / num_found, num_correct / num_total)

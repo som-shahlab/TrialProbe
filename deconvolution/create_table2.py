@@ -59,14 +59,17 @@ infos.sort(key=lambda a:abs(a['postmeans']), reverse=True)
 
 
 
-
+def cell(a, b, color=None):
+    if color:
+        return '\\Block[fill=' + color + ']{}{' + a + ' \\\\' + b + ' }'
+    else:
+        return '\\Block{}{' + a + ' \\\\' + b + ' }'
+    
 header = '''
-\\begin{tabular}{ | l |  l| l | l | l | }
-\\hline
- \\makecell[l]{Adverse Event \\\\ (ICD10)} & \\makecell[l]{Drug A \\\\ (ATC)} & \\makecell[l]{Drug B \\\\ (ATC)} & \\makecell[l]{Contingency \\\\ Table} & \\makecell[l]{Denoised \\\\ Odds Ratio} \Tstrut \Bstrut \\\\
-\\hline'''
+\\begin{NiceTabular}{ | l |  l| l | l | }
+\\hline''' + f'{cell("Denoised", "Odds Ratio")} & Unadjusted Cox & {cell("Propensity Score", "Matched Cox")} & {cell("Inverse Propensity Score", "Weighted Cox")} \Tstrut \Bstrut \\\\ \hline'
 
-footer = '\\end{tabular}'
+footer = '\\end{NiceTabular}'
 
 def capitalize(a):
     return ' '.join((b[0].upper()) + b[1:] for b in a.split())
@@ -106,20 +109,22 @@ def get_row(info):
         return '\\makecell[l]{' + f'{name} \\\\ ({", ".join(codes)})' + '}'
 
     def get_value(value):
+        value["p"] = float(value["p"])
         if value['coef'] < 0:
             if value["p"] < 0.05:
-                color = '\\cellcolor{green!25}'
+                color = 'green!50'
             else:
-                color = ''
+                color = None
             direction = '$B > A$'
         else:
             if value["p"] < 0.05:
-                color = '\\cellcolor{red!25}'
+                color = 'red!50'
             else:
-                color = ''
+                color = None
             direction = '$B < A$'
 
-        return f'{color} $p = {value["p"]:.3}$ \\newline {direction}'
+        first = f'$p = {value["p"]:.3}$'
+        return f'{cell(first, direction, color)}'
 
     t = [[int(a) for a in b] for b in info['table']]
 
@@ -134,14 +139,13 @@ def get_row(info):
     denoised_value = f'{math.exp(-info["postmeans"]):.2f}'
 
     parts = [
-        adverse_string,
-        get_drug_string(0),
-        get_drug_string(1),
-        table,
         denoised_value,
+        get_value(info["cox"]["unadjusted"]),
+        get_value(info["cox"]["logistic_match"]),
+        get_value(info["cox"]["logistic_ipw"]),
     ]
 
-    return ' & '.join(parts) + ' \\Tstrut \\Bstrut \\\\ \\hline'
+    return ' & '.join(parts) + ' \\\\ \\hline'
 
 print(header)
 for info in infos[:10]:

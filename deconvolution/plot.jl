@@ -78,6 +78,12 @@ sign_rate_match = 1 .- (false_discoveries_match ./ total_discoveries_match)
 sign_rate_match_isotonic = predict(fit(IsotonicRegression, sorted_postmeans, sign_rate_match))
 true_frac_match = true_discoveries_match ./ (1:length(true_discoveries_match))
 
+index = findfirst(x -> x == 0, sorted_postmeans)
+print("Got", sorted_postmeans[index], 
+    [sign_rate_unadj[index] sign_rate_match[index] sign_rate_ipw[index]],
+    [true_frac_unadj[index] true_frac_match[index] true_frac_ipw[index]],
+)
+
 top_ns = vcat(100:1000, 1000:10:length(sorted_postmeans))
 
 plot(

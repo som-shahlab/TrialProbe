@@ -66,8 +66,8 @@ def cell(a, b, color=None):
         return '\\Block{}{' + a + ' \\\\' + b + ' }'
     
 header = '''
-\\begin{NiceTabular}{ | l |  l| l | l | }
-\\hline''' + f'{cell("Denoised", "Odds Ratio")} & Unadjusted Cox & {cell("Propensity Score", "Matched Cox")} & {cell("Inverse Propensity Score", "Weighted Cox")} \Tstrut \Bstrut \\\\ \hline'
+\\begin{NiceTabular}{ |l| l | l |  l| l | l | }
+\\hline''' + f'{cell("Adverse Event", "(ICD10)")} & {cell("Drug A", "(ATC)")} & {cell("Drug B", "(ACT)")} & Unadjusted Cox & {cell("Propensity Score", "Matched Cox")} & {cell("Inverse Propensity Score", "Weighted Cox")} \Tstrut \Bstrut \\\\ \hline'
 
 footer = '\\end{NiceTabular}'
 
@@ -98,7 +98,7 @@ def get_row(info):
     adverse_string = '\\makecell[l]{' + f'{event_name} \\\\ ({", ".join(min_codes)})' + '}'
     
     def get_drug_string(index):
-        codes = info['atc_codes'][index]
+        codes = info['atc_codes'][index][:1]
         names = list({atc_map[c] for c in codes})
         
         if len(names) != 1:
@@ -139,7 +139,9 @@ def get_row(info):
     denoised_value = f'{math.exp(-info["postmeans"]):.2f}'
 
     parts = [
-        denoised_value,
+        adverse_string,
+        get_drug_string(0),
+        get_drug_string(1),
         get_value(info["cox"]["unadjusted"]),
         get_value(info["cox"]["logistic_match"]),
         get_value(info["cox"]["logistic_ipw"]),

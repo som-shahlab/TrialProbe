@@ -55,15 +55,13 @@ for info in infos:
 
 infos.sort(key=lambda a:abs(a['postmeans']), reverse=True)
 
-
-
-
+def cell(a, b):
+    return '\\makecell[l]{' + a + ' \\\\' + b + ' }'
 
 
 header = '''
-\\begin{tabular}{ | l |  l| l | l | l | }
-\\hline
- \\makecell[l]{Adverse Event \\\\ (ICD10)} & \\makecell[l]{Drug A \\\\ (ATC)} & \\makecell[l]{Drug B \\\\ (ATC)} & \\makecell[l]{Contingency \\\\ Table} & \\makecell[l]{Denoised \\\\ Odds Ratio} \Tstrut \Bstrut \\\\
+\\begin{tabular}{ | l | l |  l| l | l | l | }
+\\hline \\makecell[l]{Adverse Event \\\\ (ICD10)} & \\makecell[l]{Drug A \\\\ (ATC)} & \\makecell[l]{Drug B \\\\ (ATC)} & ''' + cell("Clinical Trial", "NCTs") + ''' & \\makecell[l]{Contingency \\\\ Table} & \\makecell[l]{Denoised \\\\ Odds Ratio} \Tstrut \Bstrut \\\\
 \\hline'''
 
 footer = '\\end{tabular}'
@@ -89,13 +87,22 @@ def get_row(info):
     # print(info)
 
     event_name = capitalize(info['sub_infos'][0]['side_effect_name'])
+    rcts = list({str(int(a['study'].split('NCT')[-1].split('.')[0])) for a in info['sub_infos']})
+
+    if len(rcts) == 1:
+        rct_string = rcts[0]
+    elif len(rcts) == 2:
+        rct_string = cell(rcts[0], rcts[1])
+    else:
+        print("Wat", rcts)
+        print(1/0)
 
     min_codes = minimize(info['icd10codes'])
 
     adverse_string = '\\makecell[l]{' + f'{event_name} \\\\ ({", ".join(min_codes)})' + '}'
     
     def get_drug_string(index):
-        codes = info['atc_codes'][index]
+        codes = info['atc_codes'][index][:1]
         names = list({atc_map[c] for c in codes})
         
         if len(names) != 1:
@@ -137,6 +144,7 @@ def get_row(info):
         adverse_string,
         get_drug_string(0),
         get_drug_string(1),
+        rct_string,
         table,
         denoised_value,
     ]

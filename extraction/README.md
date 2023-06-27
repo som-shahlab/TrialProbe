@@ -1,15 +1,34 @@
 ## TrialProbe Extraction Pipeline
 
 This pipeline consists of Python code for processing ClinicalTrial.gov records into a simple JSON format.
+It also performs the Empirical Bayes analysis.
 
-In order to run this code, you need Python 3.9 and a set of dependencies specified in requirements.txt
+# Setup
 
-Then, follow these steps:
+This code requires Python 3.9, R, and Julia. 
+We have provided an environment.yml conda environment with the required dependencies.
 
-1. Run the bash script download.sh to download all clinical trials with outcome data. `bash download.sh`
-2. Run extract_raw.py to extract side effects and interventions and convert them to ICD10 and ATC codes. extract_raw.py requires one argument, a path to a download of a UMLS MRCONSO.RRF file, available from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html. `python extract_raw.py --umls_mrconso_path ...`
-3. Run extract_unique.py to combine trials that tested the same drugs and side effects and perform statistics calculations. `python extract_unique.py`
+conda env create -n trialprobe_extraction --file environment.yml
 
-The result of this pipeline is a single file, unique_entries.txt. This file contains all the mappable clinical trial ground truth effects.
+This will install Python, R, Julia and all the necessary Python / Julia  packages.
 
-For the sake of convience, we have included a copy of that file in this repository that was computed from the March 3rd, 2021 ClinicalTrials.gov dump.
+You must also install the Julia packages spereately with the following commandsulia packages spereately with the following commands in the julia command line
+
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
+```
+
+# Steps to Run
+
+Running this pipeline reuires the following steps
+
+```
+bash download.sh
+python extract_raw.py --umls_mrconso_path ...
+python extract_unique.py
+```
+
+The output of this program is a single file, unique_entries.txt with all the extracted effects and statistical analysis.
+We have included a reference copy of this file from the June 3rd, 2020 download of ClinicalTrials.gov in the main TrialProbe folder.

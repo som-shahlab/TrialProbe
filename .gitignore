@@ -1,7 +1,10 @@
 __pycache__
+.ipynb_checkpoints
+*.png
 *.db
 nct
 *.csv
 *.tex
 *.RRF
 smaller
+output

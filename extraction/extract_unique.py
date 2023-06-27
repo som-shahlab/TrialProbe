@@ -1,10 +1,47 @@
 import json
 import numpy as np
 import collections
+import argparse
+import lxml.etree
+import functools
 
+parser = argparse.ArgumentParser(
+    prog='extract_unique'
+)
+
+parser.add_argument('--require_multi_rct', action=argparse.BooleanOptionalAction)
+parser.add_argument('--require_blinding', action=argparse.BooleanOptionalAction)
+
+args = parser.parse_args()
+
+@functools.cache
+def is_valid_trial(study_path):
+    with open(study_path) as f:
+        document = lxml.etree.parse(f)
+    
+    if args.require_blinding:
+        design = document.find('study_design_info')
+        masking = design.find('masking')
+        if masking is None:
+            value = False
+        else:
+            value = 'Participant' in masking.text
+        print(value)
+        return value
+    else:
+        return True
+    
+def is_valid_entry(entry):
+    if args.require_multi_rct:
+        trials = {i['study'] for i in entry['sub_infos']}
+        return len(trials) > 1
+    else:
+        return True
+    
 with open('raw_entries.txt') as f:
     lines = f.readlines()
     infos = [json.loads(a) for a in lines]
+    infos = [a for a in infos if is_valid_trial(a['study'])]
 
 drug_maps = collections.defaultdict(list)
 
@@ -15,13 +52,9 @@ for i in infos:
     
 new_infos = []
 
-
 with open('unique_entries.txt', 'w') as f:
 
     for i, (k, v) in enumerate(drug_maps.items()):
-        # if i != 10092:
-        #     continue
-
         if i % 1000 == 0:
             print(i, len(drug_maps))
         
@@ -77,5 +110,6 @@ with open('unique_entries.txt', 'w') as f:
             'table': final_combined_table.tolist(),
         }
 
-        f.write(json.dumps(new_info) + '\n')
+        if is_valid_entry(new_info):
+            f.write(json.dumps(new_info) + '\n')
 

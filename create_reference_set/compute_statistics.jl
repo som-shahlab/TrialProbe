@@ -26,6 +26,7 @@ theme(
 )
 
 entries = readlines("unique_entries.txt")
+#entries = readlines("fake_entries.txt")
 entries = JSON.parse.(entries)
 
 function to_int(val)
@@ -61,18 +62,14 @@ _idx = findall(getfield.(Zs_raw, :n) .> 0)
 Zs_all = Zs_raw[_idx]
 Ps_all = Ps_raw[_idx]
 
-# Require at least one event per arm when training to avoid infinite odds ratios
-train_idx = findall(getfield.(Zs_raw, :Z) .> 0)
-Zs_train = Zs_raw[train_idx]
-
 # Deconvolve
 npmle_symm = NPMLE(
     convexclass = Empirikos.SymmetricDiscretePriorClass(; support = 0:0.01:8),
     solver = Hypatia.Optimizer,
 )
-npmle_symm_fit = fit(npmle_symm, Zs_train)
+npmle_symm_fit = fit(npmle_symm, Zs_all)
 
-log_ORs = log.(Empirikos.odds_ratio.(Zs_train; offset = 0.000000001))
+log_ORs = log.(Empirikos.odds_ratio.(Zs_all; offset = 0.000000001))
 log_OR_cdf = ecdf([-log_ORs; log_ORs])
 
 print(support(npmle_symm_fit.prior))
@@ -103,14 +100,13 @@ plot!(
 savefig("../output/trialverify_distributions.tex")
 
 # Compute denoised log-odds ratios
-train_postmeans = PosteriorMean.(Zs_train).(npmle_symm_fit.prior)
 postmeans = PosteriorMean.(Zs_all).(npmle_symm_fit.prior)
 lower = exp.( quantile.(Empirikos.posterior.(Zs_all, Ref(npmle_symm_fit.prior)), 0.025))
 upper = exp.( quantile.(Empirikos.posterior.(Zs_all, Ref(npmle_symm_fit.prior)), 0.975))
 
 plot(
     abs.(log_ORs),
-    abs.(train_postmeans),
+    abs.(postmeans),
     seriestype = :scatter,
     alpha = 0.4,
     markerstrokealpha = 0,

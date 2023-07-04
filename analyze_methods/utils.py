@@ -1,4 +1,6 @@
 import copy
+import numpy as np
+import math
 
 def create_map(entries):
     result = {}
@@ -36,3 +38,35 @@ def join_reference_set_and_results(reference_set, observational_results):
                 
         result.append(entry)
     return result
+
+def compute_sign_rate_found(data, model_category, model_type):
+    postmean = []
+    fraction_correct = []
+    fraction_found = []
+
+    num_processed = 0
+    num_correct_so_far = 0
+
+    last_postmean = None
+    
+    for i, item in enumerate(data):
+        results = item['results'][model_category][model_type]
+        if results['p'] > 0.05:
+            continue
+
+        
+        num_processed += 1
+        if np.sign(results['coef']) == np.sign(item['postmean']):
+            num_correct_so_far += 1
+
+        if len(postmean) > 0 and postmean[-1] == math.exp(-item['postmean']):
+            postmean.pop()
+            fraction_correct.pop()
+            fraction_found.pop()
+            
+        postmean.append(math.exp(-item['postmean']))
+        fraction_correct.append(num_correct_so_far / num_processed)
+        fraction_found.append(num_correct_so_far / (i + 1))
+
+
+    return np.array(postmean), np.array(fraction_correct), np.array(fraction_found), np.array(num_processed)

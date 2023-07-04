@@ -56,19 +56,23 @@ Zs_raw = get_sample.(entries)
 
 Ps_raw = get_p.(entries)
 
-# Require at least one event per arm to avoid issues with infinite hazard ratios
-_idx = findall(getfield.(Zs_raw, :Z) .> 0)
+# Require at least one event to be able to resolve hazard ratios
+_idx = findall(getfield.(Zs_raw, :n) .> 0)
 Zs_all = Zs_raw[_idx]
 Ps_all = Ps_raw[_idx]
+
+# Require at least one event per arm when training to avoid infinite odds ratios
+train_idx = findall(getfield.(Zs_raw, :Z) .> 0)
+Zs_train = Zs_raw[train_idx]
 
 # Deconvolve
 npmle_symm = NPMLE(
     convexclass = Empirikos.SymmetricDiscretePriorClass(; support = 0:0.01:8),
     solver = Hypatia.Optimizer,
 )
-npmle_symm_fit = fit(npmle_symm, Zs_all)
+npmle_symm_fit = fit(npmle_symm, Zs_train)
 
-log_ORs = log.(Empirikos.odds_ratio.(Zs_all; offset = 0.000000001))
+log_ORs = log.(Empirikos.odds_ratio.(Zs_train; offset = 0.000000001))
 log_OR_cdf = ecdf([-log_ORs; log_ORs])
 
 print(support(npmle_symm_fit.prior))
@@ -99,13 +103,14 @@ plot!(
 savefig("../output/trialverify_distributions.tex")
 
 # Compute denoised log-odds ratios
+train_postmeans = PosteriorMean.(Zs_train).(npmle_symm_fit.prior)
 postmeans = PosteriorMean.(Zs_all).(npmle_symm_fit.prior)
 lower = exp.( quantile.(Empirikos.posterior.(Zs_all, Ref(npmle_symm_fit.prior)), 0.025))
 upper = exp.( quantile.(Empirikos.posterior.(Zs_all, Ref(npmle_symm_fit.prior)), 0.975))
 
 plot(
     abs.(log_ORs),
-    abs.(postmeans),
+    abs.(train_postmeans),
     seriestype = :scatter,
     alpha = 0.4,
     markerstrokealpha = 0,
@@ -123,7 +128,7 @@ savefig("../output/denoise_odds_ratios.tex")
 
 # Evaluation
 
-for (i, postmean, lower, upper, p) in zip(_idx, postmeans, lower, upper, Ps_raw)
+for (i, postmean, lower, upper, p) in zip(_idx, postmeans, lower, upper, Ps_all)
     entries[i]["postmean"] = postmean
     entries[i]["lower"] = lower
     entries[i]["upper"] = upper
@@ -132,7 +137,7 @@ end
 
 first = _idx[1]
 print(first, entries[first])
-print(postmeans[1], Ps_raw[1], Zs_all[1])
+print(postmeans[1], Ps_all[1], Zs_all[1])
 
 result_lines = JSON.json.(entries)
 

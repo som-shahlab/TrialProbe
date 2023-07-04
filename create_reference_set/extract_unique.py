@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('--require_several_rcts', action=argparse.BooleanOptionalAction)
-parser.add_argument('--require_high_quality_rcts', action=argparse.BooleanOptionalAction, default=True)
+parser.add_argument('--require_high_quality_rcts', action=argparse.BooleanOptionalAction)
 
 args = parser.parse_args()
 

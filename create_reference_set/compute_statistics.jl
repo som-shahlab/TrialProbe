@@ -26,7 +26,6 @@ theme(
 )
 
 entries = readlines("unique_entries.txt")
-#entries = readlines("fake_entries.txt")
 entries = JSON.parse.(entries)
 
 function to_int(val)

@@ -2,12 +2,13 @@ import csv
 import json
 import os
 import math
+from utils import join_reference_set_and_results
 
 
 icd_map = {}
 atc_map = {}
 
-with open('smaller') as f:
+with open('smaller_mrconso.rrf') as f:
     for line in f:
         if False:
             break
@@ -29,34 +30,17 @@ with open('smaller') as f:
 
 
 
-with open('results.json') as f:
+with open('../reference_set.txt') as f:
     infos = [json.loads(a) for a in f]
 
-post_means = {}
-
-with open('with_means.csv') as f:
-    reader = csv.DictReader(f)
-    for line in reader:
-        key = tuple(int(line[k]) for k in ('X1', 'N1', 'X2', 'N2'))
-        post_means[key] = float(line['postmeans'])
-        
-for info in infos:
-    key = tuple(int(info['table'][a][b]) for a in range(2) for b in range(2))
-    if key not in post_means:
-        if key[0] == 0 or key[2] == 0:
-            info['postmeans'] = 0
-        else:
-            print(info, key)
-            print(1/ 0)
-    else:
-        info['postmeans'] = post_means[key]
-
-    
-
-infos.sort(key=lambda a:abs(a['postmeans']), reverse=True)
+with open('observational_results.txt') as f:
+    observational = [json.loads(a) for a in f]
 
 
+infos = join_reference_set_and_results(infos, observational)
+infos = [a for a in infos if 'postmean' in a]
 
+infos.sort(key=lambda a:abs(a['postmean']), reverse=True)
 
 
 def cell(a, b, color=None):
@@ -152,15 +136,15 @@ def get_row(info):
     table = f'''{start} {norm(t[0][0])} & {norm(t[0][1])} \\\\
                 {norm(t[1][0])} & {norm(t[1][1])} \\\\ {end}'''
 
-    denoised_value = f'{math.exp(-info["postmeans"]):.2f}'
+    denoised_value = f'{math.exp(-info["postmean"]):.2f}'
 
     parts = [
         adverse_string,
         get_drug_string(0),
         get_drug_string(1),
-        get_value(info["cox"]["unadjusted"]),
-        get_value(info["cox"]["logistic_match"]),
-        get_value(info["cox"]["logistic_ipw"]),
+        get_value(info["results"]["cox"]["unadjusted"]),
+        get_value(info["results"]["cox"]["logistic_match"]),
+        get_value(info["results"]["cox"]["logistic_ipw"]),
     ]
 
     return ' & '.join(parts) + ' \\\\ \\hline'

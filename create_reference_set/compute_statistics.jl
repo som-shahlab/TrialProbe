@@ -1,6 +1,7 @@
 using Pkg
 Pkg.activate(".")
 
+using NPZ
 using CSV
 using StatsBase
 using DataFrames
@@ -77,49 +78,19 @@ print(cdf(npmle_symm_fit.prior, -log(10)))
 print("\nFOO\n")
 print(log_OR_cdf(-log(10)))
 
-# Plot deconvolved distribution
-plot(
-    support(npmle_symm_fit.prior),
-    x -> cdf(npmle_symm_fit.prior, x),
-    legend = :bottomright,
-    color = :purple,
-    xlabel = L"\textrm{odds ratio } \mu",
-    ylabel = "Distribution",
-    label = "Estimated",
-    xlim = (-3, 3),
-    xticks = ([-log(10), -log(3), 0, log(3), log(10)], ["0.1", "0.33", "1", "3", "10"]),
-)
-plot!(
-    support(npmle_symm_fit.prior),
-    x -> log_OR_cdf(x),
-    color = :grey,
-    linestyle = :dash,
-    label = "Empirical",
-)
-savefig("../output/trialverify_distributions.tex")
+x = support(npmle_symm_fit.prior)
+
+npzwrite("../output/prior_support.npy", x)
+npzwrite("../output/log_OR_cdf.npy", log_OR_cdf.(x))
+npzwrite("../output/estimated_cdf.npy", cdf.(npmle_symm_fit.prior, x))
 
 # Compute denoised log-odds ratios
 postmeans = PosteriorMean.(Zs_all).(npmle_symm_fit.prior)
 lower = exp.( quantile.(Empirikos.posterior.(Zs_all, Ref(npmle_symm_fit.prior)), 0.025))
 upper = exp.( quantile.(Empirikos.posterior.(Zs_all, Ref(npmle_symm_fit.prior)), 0.975))
 
-plot(
-    abs.(log_ORs),
-    abs.(postmeans),
-    seriestype = :scatter,
-    alpha = 0.4,
-    markerstrokealpha = 0,
-    markersize = 1,
-    xlim = (-0.1, 3.45),
-    ylim = (-0.1, 3.45),
-    label = "",
-    xlabel = "Sample odds ratio",
-    ylabel = "Denoised odds ratio",
-    yticks = ([0, log(3), log(10), log(30)], ["1", "3", "10", "30"]),
-    xticks = ([0, log(3), log(10), log(30)], ["1", "3", "10", "30"]),
-)
-plot!([0, 3.45], [0, 3.45], linestyle = :dot, color = :grey, alpha = 0.7, label = "")
-savefig("../output/denoise_odds_ratios.tex")
+npzwrite("../output/log_ORs.npy", log_ORs)
+npzwrite("../output/postmeans.npy", postmeans)
 
 # Evaluation
 

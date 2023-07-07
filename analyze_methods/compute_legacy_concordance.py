@@ -41,24 +41,27 @@ with open('../reference_set.txt') as f:
 with open('observational_results.txt') as f:
     observational = [json.loads(a) for a in f]
 
+print(len(infos))
 
 infos = join_reference_set_and_results(infos, observational)
+print(len(infos))
 infos = [a for a in infos if 'postmean' in a]
+print(len(infos))
 
 infos.sort(key=lambda a:abs(a['postmean']), reverse=True)
 
 for name in ['Ours']:
-    for method in ['unadjusted', 'match', 'ipw']:
+    for method in ['unadjusted', 'logistic_match', 'logistic_ipw']:
         num_total = 0
         num_found = 0
         num_correct = 0
 
-        for info in info:
-            if float(info['p']) > 0.05:
+        for info in infos:
+            if info['p'] > 0.05:
                 continue 
 
-            p = float(info["results"]["cox"]['p'])
-            coef = float(info["results"]["cox"]['coef'])
+            p = info["results"]["cox"][method]['p']
+            coef = info["results"]["cox"][method]['coef']
 
             num_total += 1
 
@@ -69,4 +72,7 @@ for name in ['Ours']:
                 if coef < 0:
                     num_correct += 1
 
-        print(name, method, num_total, num_correct / num_found, num_correct / num_total)
+        def h(a):
+            return f'{100 * a: 0.0f}'
+
+        print(name, method, num_total, h(num_correct / num_found), h(num_correct / num_total))

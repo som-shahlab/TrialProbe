@@ -22,16 +22,17 @@ def is_valid_trial(study_path):
     if args.require_high_quality_rcts:
         design = document.find('study_design_info')
         masking = design.find('masking')
-        if masking is None:
-            return False
-        
-        if 'Participant' not in masking.text:
-                return False
-        
         allocation = design.find('allocation')
 
         if allocation.text != 'Randomized':
             return False
+
+        if masking is None:
+            return False
+        
+        if 'Participant' not in masking.text:
+            return False
+        
 
     return True
 

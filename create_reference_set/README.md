@@ -33,4 +33,4 @@ julia compute_statistics.jl
 
 The output of this program is a single file, reference_set.txt with all the extracted effects and statistical analysis.
 
-We have included a reference copy of reference_set.txt using a June 3rd, 2020 download of ClinicalTrials.gov in the main TrialProbe folder.
+We have included a reference copy of reference_set.txt using a June 4rd, 2020 download of ClinicalTrials.gov in the main TrialProbe folder.

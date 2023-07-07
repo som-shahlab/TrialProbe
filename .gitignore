@@ -12,3 +12,4 @@ create_reference_set/unique_entries.txt
 create_reference_set/reference_set.txt
 raw_reference_set.txt
 multi_rct_reference_set.txt
+*.pdf
